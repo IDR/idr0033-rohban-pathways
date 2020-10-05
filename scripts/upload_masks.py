@@ -61,9 +61,9 @@ def get_corrected_wells(conn):
     for plate in screen.listChildren():
         pn = plate.getName()
         if not pn.endswith("_illum_corrected"):
-            log.debug(f"Skipping {pn}")
+            log.debug(f"Skipping plate {pn}")
             continue
-        wells.append(list(plate.listChildren()))
+        wells.extend(list(plate.listChildren()))
     return wells
 
 
