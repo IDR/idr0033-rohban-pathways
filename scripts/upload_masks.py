@@ -71,7 +71,7 @@ def process_well(conn, well, dry_run=True):
     FIELDS = 9
     wellpos = well.getWellPos()
     plate = well.getParent().getName()
-    log.info(f"Processing well {process_well} of plate {plate}")
+    log.info(f"Processing well {wellpos} of plate {plate}")
     for i in range(FIELDS):
         cell_path, nuclei_path = get_seg_paths(well, i)
         if not dry_run:
