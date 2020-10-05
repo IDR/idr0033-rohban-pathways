@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+#
 # Attach original cell/nuclei outline masks uploaded as part of the submission
 # to the relevant well samples for idr0033
 #
@@ -53,8 +54,8 @@ def get_seg_paths(well, index):
     return paths
 
 
-def get_corrected_plates(conn):
-    plates = []
+def get_corrected_wells(conn):
+    wells = []
     screen = conn.getObject('Screen', attributes={
         'name': 'idr0033-rohban-pathways/screenA'})
     for plate in screen.listChildren():
@@ -62,8 +63,23 @@ def get_corrected_plates(conn):
         if not pn.endswith("_illum_corrected"):
             log.debug(f"Skipping {pn}")
             continue
-        plates.append(plate)
-    return plates
+        wells.append(list(plate.listChildren()))
+    return wells
+
+
+def process_well(conn, well, dry_run=True):
+    FIELDS = 9
+    wellpos = well.getWellPos()
+    plate = well.getParent().getName()
+    log.info(f"Processing well {process_well} of plate {plate}")
+    for i in range(FIELDS):
+        cell_path, nuclei_path = get_seg_paths(well, i)
+        if not dry_run:
+            log.debug(f"Uploading and linking {cell_path}")
+            upload_and_link(conn, cell_path, well.getImage(i))
+        if not dry_run:
+            log.debug(f"Uploading and linking {nuclei_path}")
+            upload_and_link(conn, nuclei_path, well.getImage(i))
 
 
 def main(argv):
@@ -79,23 +95,12 @@ def main(argv):
         help='Run command in dry-run mode')
     args = parser.parse_args(argv)
 
-    logging.basicConfig(
-                level=logging.INFO - 10 * args.verbose + 10 * args.quiet)
+    default_level = logging.INFO - 10 * args.verbose + 10 * args.quiet
+    logging.basicConfig(level=default_level)
     with cli_login() as c:
         conn = BlitzGateway(client_obj=c.get_client())
-        for plate in get_corrected_plates(conn):
-            pn = plate.getName()
-            for well in plate.listChildren():
-                wp = well.getWellPos()
-                log.info(f"Processing plate {pn}: well {wp}")
-                for i in range(9):
-                    cell_path, nuclei_path = get_seg_paths(well, i)
-                    if not args.dry_run:
-                        log.debug(f"Uploading and linking {cell_path}")
-                        upload_and_link(conn, cell_path, well.getImage(i))
-                    if not args.dry_run:
-                        log.debug(f"Uploading and linking {nuclei_path}")
-                        upload_and_link(conn, nuclei_path, well.getImage(i))
+        for well in get_corrected_wells(conn):
+            process_well(conn, well, dry_run=args.dry_run)
 
 
 if __name__ == "__main__":
