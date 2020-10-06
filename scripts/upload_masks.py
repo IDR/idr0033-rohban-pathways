@@ -61,7 +61,7 @@ def get_corrected_wells(conn):
     for plate in screen.listChildren():
         pn = plate.getName()
         if not pn.endswith("_illum_corrected"):
-            log.debug(f"Skipping plate {pn}")
+            log.info(f"Skipping plate {pn}")
             continue
         wells.extend(list(plate.listChildren()))
     return wells
@@ -75,10 +75,10 @@ def process_well(conn, well, dry_run=True):
     for i in range(FIELDS):
         cell_path, nuclei_path = get_seg_paths(well, i)
         if not dry_run:
-            log.debug(f"Uploading and linking {cell_path}")
+            log.info(f"Uploading and linking {cell_path}")
             upload_and_link(conn, cell_path, well.getImage(i))
         if not dry_run:
-            log.debug(f"Uploading and linking {nuclei_path}")
+            log.info(f"Uploading and linking {nuclei_path}")
             upload_and_link(conn, nuclei_path, well.getImage(i))
 
 
